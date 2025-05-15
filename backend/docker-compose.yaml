@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16-bullseye
+    restart: always
+    shm_size: 128mb
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: sre_admin
+      POSTGRES_DB: sre_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d sre_db -U sre_admin" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file: "./.env"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  weaviate:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.30.1
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_API_BASED_MODULES: 'true'
+      CLUSTER_HOSTNAME: 'node1'
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+  api:
+    working_dir: /home/backend
+    build: .
+    command: bash -c "uvicorn api.server:server --reload --host 0.0.0.0 --port 3100"
+    ports:
+      - "3100:3100"
+    env_file: "./.env"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    volumes:
+      - ./api:/home/backend/api
+      - ./data:/home/backend/data
+volumes:
+  db_data:
+  weaviate_data:
