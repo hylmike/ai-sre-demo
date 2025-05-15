@@ -6,7 +6,9 @@ from langchain_google_genai import (
 )
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro", temperature=0.01, max_output_tokens=8192
+    model="gemini-2.0-flash", temperature=0.01, max_output_tokens=8192
 )
 
-embedding_function = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+embedding_function = GoogleGenerativeAIEmbeddings(
+    model="models/text-embedding-004"
+)

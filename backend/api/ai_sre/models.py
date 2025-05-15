@@ -25,11 +25,15 @@ class Chat(Base):
     __tablename__ = "chats"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), index=True
+    )
     role_type: Mapped[str] = mapped_column(Enum(RoleTypes), nullable=False)
-    content: Mapped[str] = mapped_column(String(512), nullable=False)
+    content: Mapped[str] = mapped_column(String(2048), nullable=False)
     created: Mapped[datetime] = mapped_column(insert_default=func.now())
-    updated: Mapped[datetime] = mapped_column(insert_default=func.now(), onupdate=func.now())
+    updated: Mapped[datetime] = mapped_column(
+        insert_default=func.now(), onupdate=func.now()
+    )
 
     @classmethod
     async def create(cls, db: AsyncSession, **kwargs):
@@ -50,7 +54,7 @@ class Chat(Base):
 
     @classmethod
     async def find_recent_human_records(
-            cls, db: AsyncSession, user_id: int, limit: int
+        cls, db: AsyncSession, user_id: int, limit: int
     ):
         results = await db.scalars(
             select(cls)
@@ -61,7 +65,9 @@ class Chat(Base):
         return results.all()
 
     @classmethod
-    async def find_recent_chat_history(cls, db: AsyncSession, user_id: int, limit: int):
+    async def find_recent_chat_history(
+        cls, db: AsyncSession, user_id: int, limit: int
+    ):
         query = await db.scalars(
             select(cls)
             .where(cls.user_id == user_id)
@@ -83,16 +89,16 @@ class Chat(Base):
             ai_message = ""
             index += 1
             if (
-                    index < len(chat_records)
-                    and chat_records[index].role_type == "ai"
+                index < len(chat_records)
+                and chat_records[index].role_type == "ai"
             ):
                 ai_message = chat_records[index].content
                 index += 1
             chat_history[human_message] = ai_message
             # discard answer without question, normally this should not happen
             while (
-                    index < len(chat_records)
-                    and chat_records[index].role_type == "ai"
+                index < len(chat_records)
+                and chat_records[index].role_type == "ai"
             ):
                 index += 1
 

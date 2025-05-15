@@ -8,12 +8,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 import './App.css';
 
 function App() {
-  const [question, setQuestion] = useState('')
+  const [query, setQuery] = useState('')
   const [chatHistory, setChatHistory] = useState<ChatRecord[]>([])
   const [runningIngestion, setRunningIngestion] = useState(false)
   const messageEndRef = useRef(null)
   const auth = useAuth()
-  const baseUrl = `${import.meta.env.VITE_API_URL}/api/chatbot`;
+  const baseUrl = `${import.meta.env.VITE_API_URL}/api/ai-sre`;
 
   useEffect(() => {
     if (auth.token === '') {
@@ -42,24 +42,24 @@ function App() {
     return <Navigate to='/login' />
   }
 
-  const handleChangeQuestion = (event: ChangeEvent<HTMLInputElement>) => {
-    setQuestion(event.target.value)
+  const handleChangeQuery = (event: ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value)
   }
 
   const handleKeyPress = async (event: { key: string; }) => {
-    if (event.key === 'Enter' && question.trim() !== '') {
+    if (event.key === 'Enter' && query.trim() !== '') {
       const res = await fetch(`${baseUrl}/chat-completion`, {
         method: "POST",
         headers: { "content-Type": "application/json", Authorization: `Bearer ${auth.token}` },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ query }),
       });
       const data = await res.json();
       setChatHistory([
         ...chatHistory,
-        { role_type: "human", content: question },
+        { role_type: "human", content: query },
         { role_type: "ai", content: data.chat_completion },
       ])
-      setQuestion('')
+      setQuery('')
     }
   }
 
@@ -119,10 +119,10 @@ function App() {
         <AccountCircle className='question-logo' />
         <TextField
           fullWidth
-          value={question}
+          value={query}
           className='text-field'
           size='small'
-          onChange={handleChangeQuestion}
+          onChange={handleChangeQuery}
           onKeyDown={handleKeyPress}
         />
       </div>

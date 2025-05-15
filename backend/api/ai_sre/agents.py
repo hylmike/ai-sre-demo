@@ -2,6 +2,7 @@
 
 from typing import TypedDict, Annotated
 import operator
+import base64
 
 from langchain_core.agents import AgentAction
 from langchain_core.tools import tool
@@ -12,12 +13,15 @@ from langgraph.graph import StateGraph, END
 
 from .models import RoleTypes
 from api.utils.logger import logger
-from api.utils.vs_weaviate_utils import get_multi_vector_retriever, SUMMARY_COLLECTION_NAME
+from api.utils.vs_weaviate_utils import (
+    get_multi_vector_retriever,
+    SUMMARY_COLLECTION_NAME,
+)
 from api.utils.llm_prompts import (
     query_translation_prompt_template,
     final_answer_prompt_template,
     central_processor_system_prompt,
-    extract_info_from_images_prompt
+    extract_info_from_images_prompt,
 )
 from api.utils.llm_google_utils import llm
 from api.utils.vs_weaviate_utils import (
@@ -44,7 +48,7 @@ def query_translation(query: str) -> list[str]:
     chain = prompt | llm | StrOutputParser() | (lambda x: x.split("\n"))
 
     try:
-        queries = chain.invoke({"question": query})
+        queries = chain.invoke({"query": query})
     except Exception as e:
         logger.error(f"Failed to get related queries from LLM: {e}")
         return [query]
@@ -74,9 +78,9 @@ def multi_queries_retriever(queries: list[str]) -> list[str]:
         return list(final_results)
 
 
-@tool("query_engineering_documents")
-def query_engineering_documents(query: str):
-    """Search question related engineering guidelines from given vector store and return them"""
+@tool("query_relevant_engineering_documents")
+def query_relevant_engineering_documents(query: str):
+    """Search query related engineering guidelines from given vector store and return them"""
 
     enhanced_queries = query_translation(query)
     retrieved_context = ""
@@ -93,14 +97,19 @@ def query_engineering_documents(query: str):
     return f"Data Source: Engineering documents\nRelated Information: {retrieved_context}\n"
 
 
-@tool("query_incident_analysis_documents")
-def query_incident_analysis_documents(query: str):
+@tool("query_relevant_incident_analysis_documents")
+def query_relevant_incident_analysis_documents(query: str):
     """Retrieve query related summaries from vector database, then feed related incident analysis
     PDF document in images as context to LLM, to extract query related incident troubleshooting
     information from document and return it"""
     with get_client() as client:
-        multi_retriever = get_multi_vector_retriever(client=client, collection_name=SUMMARY_COLLECTION_NAME)
-        image = multi_retriever.invoke(query)
+        multi_retriever = get_multi_vector_retriever(
+            client=client, collection_name=SUMMARY_COLLECTION_NAME
+        )
+        results = multi_retriever.invoke(query)
+        if not results:
+            return "Data source: incident analysis documents\nResult: No relevant information"
+        image = base64.b64encode(results[0]).decode("utf-8")
 
         human_messages = [
             {
@@ -122,27 +131,27 @@ def query_incident_analysis_documents(query: str):
             logger.error(
                 f"Failed to retrieve information from images with LLM: {e}"
             )
-            return ""
+            return "Data source: incident analysis documents\nResult: No relevant information"
 
         return response.content
 
 
-@tool("query_historical_incidents")
-def query_historical_incidents(query: str):
+@tool("query_relevant_historical_incidents")
+def query_relevant_historical_incidents(query: str):
     """Find query related historical incidents from elastic search database"""
-    return None
+    return "Data source: historical incident records\nResult: No relevant information"
 
 
-@tool("query_code_change_history")
-def query_code_change_history(query: str):
+@tool("query_relevant_code_change_history")
+def query_relevant_code_change_history(query: str):
     """Find query related code change history from GitHub"""
-    return None
+    return "Data source: code change history\nResult: No relevant information"
 
 
-@tool("query_application_monitoring_data")
-def query_application_monitoring_data(query: str):
+@tool("query_relevant_application_monitoring_data")
+def query_relevant_application_monitoring_data(query: str):
     """Find query related application monitoring data from DataDog"""
-    return None
+    return "Data source: application monitoring data\nResult: No relevant information"
 
 
 @tool("final_answer")
@@ -194,11 +203,11 @@ def router(state: AgentState) -> str:
 def run_tool(state: AgentState):
     """Run tool node based on last state value"""
     tool_str_to_function = {
-        "query_engineering_documents": query_engineering_documents,
-        "query_incident_analysis_documents": query_incident_analysis_documents,
-        "query_historical_incidents": query_historical_incidents,
-        "query_code_change_history": query_code_change_history,
-        "query_application_monitoring_data": query_application_monitoring_data,
+        "query_relevant_engineering_documents": query_relevant_engineering_documents,
+        "query_relevant_incident_analysis_documents": query_relevant_incident_analysis_documents,
+        "query_relevant_historical_incidents": query_relevant_historical_incidents,
+        "query_relevant_code_change_history": query_relevant_code_change_history,
+        "query_relevant_application_monitoring_data": query_relevant_application_monitoring_data,
         "final_answer": final_answer,
     }
 
@@ -216,24 +225,24 @@ def build_rag_graph():
     """Build adaptive RAG graph with all agent tools"""
 
     tools = [
-        query_engineering_documents,
-        query_incident_analysis_documents,
-        query_historical_incidents,
-        query_code_change_history,
-        query_application_monitoring_data,
+        query_relevant_engineering_documents,
+        query_relevant_incident_analysis_documents,
+        query_relevant_historical_incidents,
+        query_relevant_code_change_history,
+        query_relevant_application_monitoring_data,
         final_answer,
     ]
     processor_prompt = ChatPromptTemplate.from_messages(
         [
             (RoleTypes.SYSTEM, central_processor_system_prompt),
             MessagesPlaceholder(variable_name="chat_history"),
-            (RoleTypes.HUMAN, "{question}"),
+            (RoleTypes.HUMAN, "{query}"),
             (RoleTypes.AI, "scratchpad: {scratchpad}"),
         ]
     )
     processor_chain = (
         {
-            "question": lambda x: x["question"],
+            "query": lambda x: x["query"],
             "chat_history": lambda x: x["chat_history"],
             "scratchpad": lambda x: create_scratchpad(
                 inter_steps=x["inter_steps"]
@@ -259,11 +268,15 @@ def build_rag_graph():
 
     graph_builder = StateGraph(AgentState)
     graph_builder.add_node("processor", run_processor)
-    graph_builder.add_node("query_engineering_documents", run_tool)
-    graph_builder.add_node("query_incident_analysis_documents", run_tool)
-    graph_builder.add_node("query_historical_incidents", run_tool)
-    graph_builder.add_node("query_code_change_history", run_tool)
-    graph_builder.add_node("query_application_monitoring_data", run_tool)
+    graph_builder.add_node("query_relevant_engineering_documents", run_tool)
+    graph_builder.add_node(
+        "query_relevant_incident_analysis_documents", run_tool
+    )
+    graph_builder.add_node("query_relevant_historical_incidents", run_tool)
+    graph_builder.add_node("query_relevant_code_change_history", run_tool)
+    graph_builder.add_node(
+        "query_relevant_application_monitoring_data", run_tool
+    )
     graph_builder.add_node("final_answer", run_tool)
     graph_builder.set_entry_point("processor")
     graph_builder.add_conditional_edges(source="processor", path=router)

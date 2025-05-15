@@ -2,13 +2,14 @@
 
 import os
 
-from langchain.storage import InMemoryStore
+from langchain.storage import LocalFileStore
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.utils.data_loader import PDFLoader, IncidentDocLoader
 from api.utils.logger import logger
 from .agents import (
     TEXT_COLLECTION_NAME,
+    SUMMARY_COLLECTION_NAME,
     build_rag_graph,
 )
 from .schemas import ChatRecord
@@ -70,12 +71,12 @@ async def load_incident_docs(files: list[str], db: AsyncSession) -> list[str]:
     if not files:
         return error_messages
 
-    store = InMemoryStore()
+    store = LocalFileStore(IMPORT_FILES_FOLDER)
     with get_client() as client:
         incident_doc_loader = IncidentDocLoader(
             object_store=store,
             client=client,
-            summary_collection_name=TEXT_COLLECTION_NAME,
+            summary_collection_name=SUMMARY_COLLECTION_NAME,
         )
         for file_url in files:
             file_name = file_url.split("/")[-1]
@@ -124,23 +125,14 @@ async def gen_knowledgebase(db: AsyncSession):
     return {"status": "Success", "error": None}
 
 
-async def gen_ai_completion(
-    db: AsyncSession, user_id: int, question: str
-) -> str:
+async def gen_ai_completion(db: AsyncSession, user_id: int, query: str) -> str:
     """Use RAG with agents to generate AI completion for given question"""
     graph = build_rag_graph()
 
-    chat_history = await ChatModel.find_recent_chat_history(
-        db=db, user_id=user_id, limit=2 * RETRIEVE_CHATS_NUM
-    )
-    # If question was asked recently, just return recent answer from DB, this should improve user experience
-    if question in chat_history.keys() and chat_history[question]:
-        return chat_history[question]
-
     await ChatModel.create(
-        db=db, user_id=user_id, role_type=RoleTypes.HUMAN, content=question
+        db=db, user_id=user_id, role_type=RoleTypes.HUMAN, content=query
     )
-    response = graph.invoke({"question": question, "chat_history": []})
+    response = graph.invoke({"query": query, "chat_history": []})
     completion = response["inter_steps"][-1].log
     await ChatModel.create(
         db=db, user_id=user_id, role_type=RoleTypes.AI, content=completion

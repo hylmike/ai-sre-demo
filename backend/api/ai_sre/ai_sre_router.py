@@ -30,7 +30,7 @@ async def chat_completion(
     chat_input: ChatCompletionRequest, db: DBSessionDep, user: CurrentUserDep
 ):
     """Generate AI completion for user question. combine info from chat history and knowledge base"""
-    completion = await gen_ai_completion(db, user.id, chat_input.question)
+    completion = await gen_ai_completion(db, user.id, chat_input.query)
 
     return {"chat_completion": completion}
 

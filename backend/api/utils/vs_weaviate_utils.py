@@ -7,7 +7,7 @@ from weaviate import WeaviateClient
 from weaviate.collections import Collection
 from langchain_weaviate import WeaviateVectorStore
 from langchain.retrievers.multi_vector import MultiVectorRetriever
-from langchain.storage import InMemoryStore
+from langchain.storage import LocalFileStore
 
 from api.utils.llm_google_utils import embedding_function
 
@@ -28,23 +28,26 @@ def get_client() -> WeaviateClient:
     if not api_key:
         raise ValueError("GOOGLE_API_KEY is not set")
     client = weaviate.connect_to_local(
-        host=host,
-        port=port,
-        headers={"X-Goog-Studio-Api-Key": api_key}
+        host=host, port=port, headers={"X-Goog-Studio-Api-Key": api_key}
     )
     return client
 
 
 def get_weaviate_store(client: WeaviateClient, collection_name: str):
     return WeaviateVectorStore(
-        client=client, index_name=collection_name, embedding=embedding_function, text_key="text"
+        client=client,
+        index_name=collection_name,
+        embedding=embedding_function,
+        text_key="text",
     )
 
 
-def get_multi_vector_retriever(client: WeaviateClient, collection_name: str) -> MultiVectorRetriever:
+def get_multi_vector_retriever(
+    client: WeaviateClient, collection_name: str
+) -> MultiVectorRetriever:
     vector_store = get_weaviate_store(client, collection_name)
-    object_store = InMemoryStore()
-    id_key = "image_id"
+    object_store = LocalFileStore("./data")
+    id_key = "doc_id"
 
     return MultiVectorRetriever(
         vectorstore=vector_store,

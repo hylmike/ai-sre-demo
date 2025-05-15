@@ -13,12 +13,12 @@
 
 ## Overview and major functions
 The AI SRE is powered by generative AI and RAG (Retrieved Augment Generation).
-- Chatbot can be based on user question, search around and retrieve accurate information from different data sources (SQL database, vector DB, LLM etc) which are set up early with provided dataset, then use those contexts with LLM to formulate a final answer to user.
+- AI SRE can be based on user query, search around and retrieve accurate information from different data sources (for demo just integrate PDF files, but can easily support more) which are set up early with provided dataset or directly pull from network (like Elastic search, Github info etc), then use those contexts with LLM to formulate a final answer to user.
 - LLM I use Google `Gemini-2.0-flash` which is high efficiency and fast multi-modal large language model, data embedding use Google `text-embedding-004`.
 - Backend web framework I use `FastAPI` which is a very popular and high performance Python web framework built on AsyncIO and OpenAPI.
 - Frontend built a simple UI with React, to let user ingest all the raw data (indexing and put them in SQL DB or vector DB) and interact with chatbot.
 - Generative AI framework use Langchain, which is very popular and powerful framework which can efficiently develop generative AI features.
-- RAG part we also use LangGragh which is very powerful tool to support complicated agentic work flow and adaptive RAG.
+- RAG / agentic flow part we also use LangGragh which is very powerful tool to support complicated agentic work flow and adaptive RAG.
 - Use Postgres as SQL DB and Weaviate DB as vector data in app to save different kinds of data, I use docker build environment with these tools for app.
 - App includes simple user management and authentication,
 - Simple frontend UI to let user ingest all the raw data (indexing and put them in SQL DB or vector DB) and interact with chatbot
@@ -34,7 +34,6 @@ Following are major functions in backend:
     - For incident analysis pdf file, use Multi-vector retrieval to based on pdf summary retrieve original PDF document, then use LLM to summarize key infomation like incident tile, incident description and root cause analysis and then return this to user
 - [Adaptive RAG graph](#adaptive-rag-solution-graph) with 6 agent / tool nodes, this is core part of this chatbot solution. It can dynamically route query to different agents to collect enough context from all data source (DB table, vector collections, images and LLM), and then get best answer with these context and LLM.
 - For RAG retrieval, for input question I use query translation technique (get 3 relevant queries and retrieve top 5 of all similar contents) to improve answer accuracy
-- Use same answer if same question was asked recently, for better user experience. Currently, use exact match, can use max edit distance or regex search to get better question search performance
 - Most services, especially database operation and web communication parts, use fully async way for better performance.
 - Use file hash to record all ingested documents in DB, this can avoid duplicated work in file ingestion.
 - Use docker to set up and management backend services, including API service, easy for testing and deployment.
@@ -86,7 +85,9 @@ As we already auto create an admin user in backend for testing, so you can use f
 4. You need first setup knowledge base to finish ingestion of all data files. For this just click `GENERATE KNOWLEDGE BASE` button in top left corner. Normally it will take 1 minutes to finish everything, then you can test it with some query.
 
 ## Used dataset
-- Few PDF files as incident analysis documents, for simple test
+- Backend `/data` folder has few documents will be used as incident analysis documents for later demo or simple testing, following is my test query and result I got in my test.
+  - Current there is incident with trends report loading, some uer reported they failed to load trends report. Can you load relevant information for me?
+![alt text](image.png)
 
 
 

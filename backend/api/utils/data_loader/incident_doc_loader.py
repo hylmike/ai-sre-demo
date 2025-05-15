@@ -1,7 +1,7 @@
 import io
 import base64
 
-from langchain.storage import InMemoryStore
+from langchain.storage import LocalFileStore
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
@@ -75,7 +75,7 @@ class IncidentDocLoader:
 
     def __init__(
         self,
-        object_store: InMemoryStore,
+        object_store: LocalFileStore,
         client: WeaviateClient,
         summary_collection_name: str,
     ):
@@ -101,7 +101,7 @@ class IncidentDocLoader:
             doc_id = gen_document_id()
             document = Document(
                 page_content=summary,
-                metadata={"source": "pdf_summary", "doc_id": doc_id},
+                metadata={id_key: doc_id},
             )
             multi_retriever = MultiVectorRetriever(
                 vectorstore=summary_vector_store,
@@ -111,7 +111,8 @@ class IncidentDocLoader:
 
             # Add image and summary into multi-vector retriever, later use summary to retrieve image then feed into LLM
             multi_retriever.vectorstore.add_documents([document])
-            multi_retriever.docstore.mset([(doc_id, image_base64)])
+            image_bytes = base64.b64decode(image_base64)
+            multi_retriever.docstore.mset([(doc_id, image_bytes)])
         except Exception as e:
             logger.exception(
                 f"Failed to load incident analysis file {file_url}: {e}"

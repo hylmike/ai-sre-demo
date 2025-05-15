@@ -13,4 +13,4 @@ class ChatRecord(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    question: str
+    query: str

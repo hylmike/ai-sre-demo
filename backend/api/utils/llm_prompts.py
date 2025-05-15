@@ -14,11 +14,11 @@ issue since May 21st.
 
 query_translation_prompt_template = """
 You are AI assistant. You task is to generate five different \
-versions of given question to retrieve relevant documents from a vector database. By \
-generating multiple perspectives on the user question, your goal is to help the user \
+versions of given query to retrieve relevant documents from a vector database. By \
+generating multiple perspectives on the user query, your goal is to help the user \
 overcome some of the limitations of the distance-based similarity search.
-Provide these alternative questions separated by newlines.
-Original Question: {question}"""
+Provide these alternative queries separated by newlines.
+Original Query: {query}"""
 
 final_answer_prompt_template = """You are an assistant to summarize required information \
 from context, Use the retrieved context with LLM to give the answer. In context, for any \
@@ -38,17 +38,17 @@ GraphQL schema. This eventually caused related GraphQL queries were rejected and
 not get all report KPI results.
 
 If you can't find enough information from context, just say can't find relevant information. \
-Keep the answer brief and concise.
-Question: {question} 
+Keep the answer brief and concise, limit total words within 500.
+Query: {query} 
 Context: {context} 
 Answer:
 """
 
 central_processor_system_prompt = """You are the central processor, the great AI decision maker.
-Given the user's query you must decide what to do with it based on the list of tools provided to you. \
-And do not use same tool more than one times. 
+Given the user's query you must decide what to do with it based on the list of tools provided to \
+you, use any tool just one time in reasoning. \
 
-You should aim to collect enough information from all tools if needed before providing the all relevant \
+You should aim to collect enough information from all tools if needed before providing all relevant \
 information to the user. Once you have collection relevant information from all tools related to the \
 user's query (stored in the scratchpad), or you have used all tools searching all available data but still 
 can not find relevant information, then use the final_answer tool to generate final answer. 
