@@ -10,7 +10,7 @@ from api.user.user_router import user_router
 from api.user.services import create_user, get_all_users
 from api.user.schemas import UserForm
 from api.user.models import Roles
-from api.chatbot.chatbot_router import chatbot_router
+from api.ai_sre.ai_sre_router import ai_sre_router
 
 load_dotenv()
 
@@ -66,8 +66,8 @@ server.include_router(
 )
 
 server.include_router(
-    chatbot_router,
-    prefix="/api/chatbot",
+    ai_sre_router,
+    prefix="/api/ai-sre",
     tags=["chatbot"],
     responses={404: {"description": "Not Found"}},
 )

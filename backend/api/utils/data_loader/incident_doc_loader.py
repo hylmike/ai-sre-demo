@@ -1,4 +1,3 @@
-import os
 import io
 import base64
 
@@ -7,7 +6,7 @@ from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from weaviate import WeaviateClient
-import pymupdf
+from pdf2image import convert_from_path
 from PIL import Image
 
 from api.utils.logger import logger
@@ -20,18 +19,13 @@ from api.utils.llm_prompts import image_summary_prompt
 
 
 def create_doc_image(file_url: str):
-    pdf_images = []
     try:
-        pdf_doc = pymupdf.open(file_url)
-        for page in pdf_doc:
-            pix = page.get_pixmap()
-            pdf_images.append(pix)
+        pdf_images = convert_from_path(file_url)
         if not pdf_images:
             return None
 
-        widths, heights = zip(*(i.size for i in pdf_images))
-        total_height = sum(heights)
-        max_width = max(widths)
+        total_height = sum([image.height for image in pdf_images])
+        max_width = max([image.width for image in pdf_images])
 
         merged_img = Image.new("RGB", (max_width, total_height))
         y_offset = 0
@@ -60,7 +54,7 @@ def gen_pdf_summary(pdf_url: str, image_base64: str) -> str:
                             "type": "image_url",
                             "image_url": {
                                 "url": f"data:image/jpeg;base64,{image_base64}"
-                            }
+                            },
                         },
                     ]
                 )
@@ -105,7 +99,10 @@ class IncidentDocLoader:
 
             id_key = "doc_id"
             doc_id = gen_document_id()
-            document = Document(page_content=summary, metadata={"source": "pdf_summary", "doc_id": doc_id})
+            document = Document(
+                page_content=summary,
+                metadata={"source": "pdf_summary", "doc_id": doc_id},
+            )
             multi_retriever = MultiVectorRetriever(
                 vectorstore=summary_vector_store,
                 docstore=self.object_store,
@@ -116,7 +113,9 @@ class IncidentDocLoader:
             multi_retriever.vectorstore.add_documents([document])
             multi_retriever.docstore.mset([(doc_id, image_base64)])
         except Exception as e:
-            logger.exception(f"Failed to load PPT file {file_url}: {e}")
+            logger.exception(
+                f"Failed to load incident analysis file {file_url}: {e}"
+            )
             return False
 
         return True

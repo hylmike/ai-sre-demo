@@ -11,10 +11,10 @@ from .schemas import ChatCompletionRequest
 from api.dependencies.db import DBSessionDep
 from api.dependencies.auth import CurrentUserDep, valid_is_authenticated
 
-chatbot_router = APIRouter()
+ai_sre_router = APIRouter()
 
 
-@chatbot_router.post(
+@ai_sre_router.post(
     "/gen-knowledgebase", dependencies=[Depends(valid_is_authenticated)]
 )
 async def gen_knowledgebase_api(db: DBSessionDep):
@@ -23,7 +23,7 @@ async def gen_knowledgebase_api(db: DBSessionDep):
     return result
 
 
-@chatbot_router.post(
+@ai_sre_router.post(
     "/chat-completion", dependencies=[Depends(valid_is_authenticated)]
 )
 async def chat_completion(
@@ -35,7 +35,7 @@ async def chat_completion(
     return {"chat_completion": completion}
 
 
-@chatbot_router.get(
+@ai_sre_router.get(
     "/chat-history", dependencies=[Depends(valid_is_authenticated)]
 )
 async def chat_history(db: DBSessionDep, user: CurrentUserDep):

@@ -21,6 +21,9 @@ RUN poetry install --without dev --no-root && rm -rf ${POETRY_CACHE_DIR}
 # Build runtime image, used to run as the backend
 FROM python:3.12-slim-bookworm as backend
 
+RUN apt-get update
+RUN apt-get install poppler-utils -y
+
 ENV VIRTUAL_ENV=/home/backend/.venv \
     PATH="/home/backend/.venv/bin:$PATH" \
     PYTHONPATH="/home/backend"
