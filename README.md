@@ -87,7 +87,7 @@ As we already auto create an admin user in backend for testing, so you can use f
 ## Used dataset
 - Backend `/data` folder has few documents will be used as incident analysis documents for later demo or simple testing, following is my test query and result I got in my test.
   - Current there is incident with trends report loading, some uer reported they failed to load trends report. Can you load relevant information for me?
-![alt text](image.png)
+![img.png](img.png)
 
 
 
