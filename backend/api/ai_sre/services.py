@@ -19,7 +19,7 @@ from .models import (
     RoleTypes,
 )
 from api.utils.hash_file import get_file_hash
-from api.utils.vs_weaviate_utils import get_client
+from api.utils.vs_weaviate_utils import get_client, OBJECT_STORE_URL
 
 RETRIEVE_CHATS_NUM = 50
 IMPORT_FILES_FOLDER = "./data"
@@ -71,7 +71,7 @@ async def load_incident_docs(files: list[str], db: AsyncSession) -> list[str]:
     if not files:
         return error_messages
 
-    store = LocalFileStore(IMPORT_FILES_FOLDER)
+    store = LocalFileStore(OBJECT_STORE_URL)
     with get_client() as client:
         incident_doc_loader = IncidentDocLoader(
             object_store=store,

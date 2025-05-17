@@ -14,7 +14,7 @@ from api.utils.llm_gpt_utils import embedding_function
 TEXT_COLLECTION_NAME = "demo_text_collection"
 SUMMARY_COLLECTION_NAME = "demo_summary_collection"
 
-
+OBJECT_STORE_URL = './data/object-store'
 EXCESSIVE_ERROR_THRESHOLD = 10
 
 
@@ -46,7 +46,7 @@ def get_multi_vector_retriever(
     client: WeaviateClient, collection_name: str
 ) -> MultiVectorRetriever:
     vector_store = get_weaviate_store(client, collection_name)
-    object_store = LocalFileStore("./data")
+    object_store = LocalFileStore(OBJECT_STORE_URL)
     id_key = "doc_id"
 
     return MultiVectorRetriever(
