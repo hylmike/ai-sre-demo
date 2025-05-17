@@ -14,7 +14,7 @@ from api.utils.id_generator import gen_document_id
 from api.utils.vs_weaviate_utils import (
     get_weaviate_store,
 )
-from api.utils.llm_google_utils import llm
+from api.utils.llm_gpt_utils import llm
 from api.utils.llm_prompts import image_summary_prompt
 
 

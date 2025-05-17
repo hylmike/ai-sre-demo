@@ -9,7 +9,7 @@ from langchain_weaviate import WeaviateVectorStore
 from langchain.retrievers.multi_vector import MultiVectorRetriever
 from langchain.storage import LocalFileStore
 
-from api.utils.llm_google_utils import embedding_function
+from api.utils.llm_gpt_utils import embedding_function
 
 TEXT_COLLECTION_NAME = "demo_text_collection"
 SUMMARY_COLLECTION_NAME = "demo_summary_collection"

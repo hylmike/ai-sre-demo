@@ -23,7 +23,7 @@ from api.utils.llm_prompts import (
     central_processor_system_prompt,
     extract_info_from_images_prompt,
 )
-from api.utils.llm_google_utils import llm
+from api.utils.llm_gpt_utils import llm
 from api.utils.vs_weaviate_utils import (
     get_weaviate_store,
     TEXT_COLLECTION_NAME,
