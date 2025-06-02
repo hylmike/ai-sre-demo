@@ -142,6 +142,14 @@ def query_relevant_historical_incidents(query: str):
     return "Data source: historical incident records\nResult: No relevant information"
 
 
+#     return """
+# Data source: Historical incident query
+# Incident title: Survey trending report returned 500 error
+# Incident description: From DataDog found loading trends reports got 500 error returned, with no clear pattern related to specific report types or accounts. Overall trends report loading success rate from 99% to 78%.
+# Root cause analysis: One backend container worked at abnormal status, then this caused most trends report requests failed at that container with 500 error. This led to big trends report loading success rate decreasing. After we reset that problematic container, the trends report loading success rate returned to normal.
+# """
+
+
 @tool("query_relevant_code_change_history")
 def query_relevant_code_change_history(query: str):
     """Find query related code change history from GitHub"""
