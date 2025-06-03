@@ -14,7 +14,7 @@
 ## Overview and major functions
 The AI SRE is powered by generative AI and RAG (Retrieved Augment Generation).
 - AI SRE can be based on user query, search around and retrieve accurate information from different data sources (for demo just integrate PDF files, but can easily support more) which are set up early with provided dataset or directly pull from network (like Elastic search, Github info etc), then use those contexts with LLM to formulate a final answer to user.
-- LLM I use Google `Gemini-2.0-flash` which is high efficiency and fast multi-modal large language model, data embedding use Google `text-embedding-004`.
+- LLM I use OpenAI `GPT-4o-mini` which is high efficiency and fast multi-modal large language model, data embedding use OpenAI `text-embedding-3-large`.
 - Backend web framework I use `FastAPI` which is a very popular and high performance Python web framework built on AsyncIO and OpenAPI.
 - Frontend built a simple UI with React, to let user ingest all the raw data (indexing and put them in SQL DB or vector DB) and interact with chatbot.
 - Generative AI framework use Langchain, which is very popular and powerful framework which can efficiently develop generative AI features.
@@ -53,7 +53,7 @@ Following are major functions in Frontend:
 ## Backend setup
 As backend use docker to set up, need docker installed before running it.
 
-1. After you clone repository to local. Go to backend folder to set up .env file with contents in env.example file. You need Google AI Studio api key for this app.
+1. After you clone repository to local. Go to backend folder to set up .env file with contents in env.example file. You need OpenAI api key for this app.
 
 2. To start backend, just run following command in app root folder (/ai-sre-demo):
 ```
